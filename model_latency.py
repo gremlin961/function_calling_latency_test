@@ -1,6 +1,4 @@
 import time
-#import vertexai
-#from vertexai.generative_models import FunctionDeclaration, Tool, GenerativeModel
 from google import genai
 from google.genai import types
 
@@ -11,7 +9,7 @@ PROJECT_ID = "your-gcp-project-id"
 LOCATION = "us-central1"
 
 # Models to test
-MODEL_VERSIONS = ["gemini-2.5-flash", "gemini-2.0-flash-001"] # Example model versions
+MODEL_VERSIONS = ["gemini-2.0-flash-001", "gemini-2.5-flash"] # Example model versions
 PROMPT = "What is the weather like in Boston?" # Example prompt to send to the models
 
 
@@ -51,6 +49,27 @@ get_weather_func = {
 # Configure the Tools and Configs
 tools = types.Tool(function_declarations=[get_weather_func])
 config = types.GenerateContentConfig(tools=[tools])
+
+
+# --- Warm up API for testing ---
+def warm_up(model_name: str):
+    """
+    Warm up for latency testing.
+    """
+    print(f"--- Performing warm up of model {model_name}, please wait... ---")
+    try:
+
+        # Send the function
+        response = client.models.generate_content(
+            model=model_name,
+            contents=PROMPT,
+            config=config,
+        )
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    print("-" * (len(model_name) + 18))
+    print()
 
 # --- Latency Measurement ---
 
@@ -94,5 +113,6 @@ if __name__ == "__main__":
     if PROJECT_ID == "your-gcp-project-id":
         print("Please replace 'your-gcp-project-id' with your actual Google Cloud project ID.")
     else:
-        for model_version in MODEL_VERSIONS:
+        for i, model_version in enumerate(MODEL_VERSIONS):
+            warm_up(model_version)
             measure_function_calling_latency(model_version)
